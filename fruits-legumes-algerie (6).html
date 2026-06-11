@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fruits & Légumes d'Algérie</title>
+  <style>
+    :root {
+      --vert:   #2d6a4f;
+      --vert-c: #52b788;
+      --or:     #e9c46a;
+      --fond:   #faf7f2;
+      --ligne:  #f0ede6;
+      --txt:    #1a1a1a;
+      --gris:   #6b6b6b;
+      --rouge:  #c1440e;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, Helvetica, sans-serif; background: var(--fond); color: var(--txt); padding: 28px 16px 60px; }
+    header { max-width: 800px; margin: 0 auto 20px; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 12px; border-bottom: 2px solid var(--vert); padding-bottom: 14px; }
+    h1 { font-size: clamp(1.3rem, 4vw, 1.9rem); color: var(--vert); line-height: 1.2; font-family: Georgia, serif; }
+    .sous-titre { font-size: .7rem; color: var(--gris); margin-top: 3px; text-transform: uppercase; letter-spacing: .05em; }
+    .date-badge { background: var(--vert); color: #fff; font-size: .75rem; font-weight: bold; padding: 5px 13px; border-radius: 18px; white-space: nowrap; }
+    .save-bar { max-width: 800px; margin: 0 auto 16px; background: #fff; border-radius: 8px; padding: 12px 18px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; box-shadow: 0 2px 10px rgba(0,0,0,.06); }
+    .save-status { font-size: .78rem; color: var(--gris); }
+    .save-status.modifie { color: var(--rouge); font-weight: bold; }
+    .save-status.sauve   { color: var(--vert-c); font-weight: bold; }
+    .save-status.syncing { color: #b07d00; font-weight: bold; }
+    .btn-save { background: var(--rouge); color: #fff; border: none; border-radius: 7px; padding: 9px 20px; font-size: .82rem; font-weight: bold; cursor: pointer; white-space: nowrap; }
+    .btn-save:hover { background: #a33009; }
+    .btn-save:disabled { background: var(--gris); cursor: default; }
+    .carte { max-width: 800px; margin: 0 auto; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 3px 16px rgba(0,0,0,.08); }
+    .entete { display: grid; grid-template-columns: 1fr 65px 115px; background: var(--ligne); padding: 9px 18px; }
+    .entete span { font-size: .62rem; font-weight: bold; text-transform: uppercase; letter-spacing: .1em; color: var(--gris); }
+    .entete span:last-child { text-align: right; }
+    .cat { background: var(--vert); color: #fff; font-family: Georgia, serif; font-size: .88rem; padding: 8px 18px; letter-spacing: .06em; }
+    .row { display: grid; grid-template-columns: 1fr 65px 115px; align-items: center; padding: 10px 18px; border-bottom: 1px solid var(--ligne); }
+    .row:last-child { border-bottom: none; }
+    .row:hover { background: #fdfaf4; }
+    .nom { font-size: .88rem; }
+    .unite { font-size: .7rem; color: var(--gris); background: var(--ligne); padding: 2px 7px; border-radius: 8px; display: inline-block; }
+    .prix-wrap { display: flex; align-items: center; justify-content: flex-end; gap: 3px; }
+    input[type="number"] { width: 78px; border: 1.5px solid transparent; border-radius: 5px; padding: 4px 6px; font-family: Arial; font-size: .9rem; font-weight: bold; color: var(--rouge); text-align: right; background: transparent; cursor: pointer; -moz-appearance: textfield; }
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+    input[type="number"]:hover { border-color: var(--or); background: #fffbf0; }
+    input[type="number"]:focus { outline: none; border-color: var(--vert-c); background: #f0faf5; }
+    .da { font-size: .7rem; color: var(--gris); }
+    .historique { max-width: 800px; margin: 24px auto 0; background: #fff; border-radius: 10px; box-shadow: 0 3px 16px rgba(0,0,0,.08); overflow: hidden; }
+    .historique-header { background: var(--ligne); padding: 12px 18px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+    .historique-header h2 { font-size: .85rem; color: var(--gris); font-weight: bold; text-transform: uppercase; letter-spacing: .08em; }
+    .hist-actions { display: flex; gap: 8px; align-items: center; }
+    .btn-admin { background: none; border: 1px solid var(--gris); color: var(--gris); border-radius: 5px; padding: 5px 11px; font-size: .72rem; cursor: pointer; }
+    .btn-admin:hover { border-color: var(--vert); color: var(--vert); }
+    .btn-admin.actif { border-color: var(--vert); color: var(--vert); background: #f0faf5; }
+    .btn-effacer { background: var(--rouge); color: #fff; border: none; border-radius: 5px; padding: 5px 11px; font-size: .72rem; cursor: pointer; display: none; }
+    .btn-effacer.visible { display: inline-block; }
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 100; align-items: center; justify-content: center; }
+    .modal-overlay.visible { display: flex; }
+    .modal { background: #fff; border-radius: 10px; padding: 28px 24px; width: 320px; max-width: 90vw; box-shadow: 0 8px 40px rgba(0,0,0,.2); }
+    .modal h3 { color: var(--vert); font-family: Georgia, serif; font-size: 1.1rem; margin-bottom: 16px; }
+    .modal input[type="password"] { width: 100%; border: 1.5px solid var(--ligne); border-radius: 6px; padding: 9px 12px; font-size: .9rem; font-family: Arial; margin-bottom: 8px; }
+    .modal input[type="password"]:focus { outline: none; border-color: var(--vert-c); }
+    .modal-error { font-size: .75rem; color: var(--rouge); min-height: 18px; margin-bottom: 10px; }
+    .modal-btns { display: flex; gap: 8px; justify-content: flex-end; }
+    .btn-annuler { background: var(--ligne); color: var(--txt); border: none; border-radius: 6px; padding: 8px 16px; font-size: .82rem; cursor: pointer; }
+    .btn-confirmer { background: var(--vert); color: #fff; border: none; border-radius: 6px; padding: 8px 16px; font-size: .82rem; cursor: pointer; font-weight: bold; }
+    .historique-vide { padding: 16px 18px; font-size: .8rem; color: var(--gris); font-style: italic; }
+    .snap { border-bottom: 1px solid var(--ligne); overflow: hidden; }
+    .snap:last-child { border-bottom: none; }
+    .snap-header { display: flex; align-items: center; justify-content: space-between; padding: 11px 18px; cursor: pointer; user-select: none; background: #fff; transition: background .15s; }
+    .snap-header:hover { background: #fdfaf4; }
+    .snap-date { font-size: .82rem; font-weight: bold; color: var(--vert); }
+    .snap-heure { font-size: .72rem; color: var(--gris); margin-left: 8px; }
+    .snap-arrow { font-size: .7rem; color: var(--gris); transition: transform .2s; }
+    .snap.ouvert .snap-arrow { transform: rotate(180deg); }
+    .snap-body { display: none; padding: 0 18px 14px; }
+    .snap.ouvert .snap-body { display: block; }
+    .snap-grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 3px 16px; margin-top: 8px; }
+    .snap-item { font-size: .78rem; display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px dashed var(--ligne); }
+    .snap-item-nom { color: var(--txt); }
+    .snap-item-prix { font-weight: bold; color: var(--rouge); }
+    .snap-cat { font-size: .7rem; font-weight: bold; color: var(--vert); text-transform: uppercase; letter-spacing: .07em; margin: 10px 0 4px; grid-column: 1 / -1; }
+    footer { max-width: 800px; margin: 16px auto 0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; font-size: .7rem; color: var(--gris); }
+    .btn-print { background: var(--vert); color: #fff; border: none; border-radius: 7px; padding: 8px 16px; font-size: .78rem; cursor: pointer; }
+    @media (max-width: 540px) {
+      .entete, .row { grid-template-columns: 1fr 52px 95px; padding: 8px 12px; }
+      input[type="number"] { width: 62px; }
+      .snap-grille { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 380px) {
+      .entete { display: none; }
+      .row { grid-template-columns: 1fr auto; grid-template-rows: auto auto; row-gap: 2px; padding: 9px 12px; }
+      .nom { grid-column: 1; grid-row: 1; font-size: .83rem; }
+      .unite-col { grid-column: 1; grid-row: 2; }
+      .prix-wrap { grid-column: 2; grid-row: 1 / 3; align-self: center; }
+      input[type="number"] { width: 56px; }
+      .snap-grille { grid-template-columns: 1fr; }
+    }
+    @media print {
+      .btn-print, .save-bar, .historique, footer { display: none; }
+      body { padding: 0; background: #fff; }
+      .carte { box-shadow: none; }
+      input[type="number"] { border: none; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Fruits &amp; Légumes d'Algérie</h1>
+    <p class="sous-titre">Tarifs en vigueur</p>
+  </div>
+  <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+    <div class="date-badge" id="date-badge">—</div>
+    <div id="last-save" style="font-size:.68rem;color:var(--gris);font-style:italic;text-align:right"></div>
+  </div>
+</header>
+
+<div class="save-bar">
+  <span class="save-status" id="save-status">Chargement…</span>
+  <button class="btn-save" id="btn-save" onclick="enregistrer()">💾 Enregistrer les prix</button>
+</div>
+
+<div class="carte">
+  <div class="entete"><span>Produit</span><span>Unité</span><span>Prix (DA)</span></div>
+  <div class="cat">🌿 Fruits</div>
+  <div class="row"><div class="nom">🍑 Abricot</div><div class="unite-col"><span class="unite">kg</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="160" data-id="0" data-nom="Abricot" data-cat="Fruits"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🍍 Ananas</div><div class="unite-col"><span class="unite">pce</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="350" data-id="1" data-nom="Ananas" data-cat="Fruits"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🥑 Avocat</div><div class="unite-col"><span class="unite">pce</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="150" data-id="2" data-nom="Avocat" data-cat="Fruits"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🍌 Banane</div><div class="unite-col"><span class="unite">kg</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="200" data-id="3" data-nom="Banane" data-cat="Fruits"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🍋 Bergamote</div><div class="unite-col"><span class="unite">kg</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="130" data-id="4" data-nom="Bergamote" data-cat="Fruits"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🍒 Cerise</div><div class="unite-col"><span class="unite">kg</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="280" data-id="5" data-nom="Cerise" data-cat="Fruits"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🍋 Citron</div><div class="unite-col"><span class="unite">kg</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="100" data-id="6" data-nom="Citron" data-cat="Fruits"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🍐 Coing</div><div class="unite-col"><span class="unite">kg</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="110" data-id="7" data-nom="Coing" data-cat="Fruits"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🌴 Datte Deglet Nour</div><div class="unite-col"><span class="unite">kg</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="500" data-id="8" data-nom="Datte Deglet Nour" data-cat="Fruits"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🌴 Datte Ghars</div><div class="unite-col"><span class="unite">kg</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="350" data-id="9" data-nom="Datte Ghars" data-cat="Fruits"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🫐 Figue</div><div class="unite-col"><span class="unite">kg</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="180" data-id="10" data-nom="Figue" data-cat="Fruits"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🍓 Fraise</div><div class="unite-col"><span class="unite">kg</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="300" data-id="11" data-nom="Fraise" data-cat="Fruits"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🌰 Grenade</div><div class="unite-col"><span class="unite">pce</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="80" data-id="12" data-nom="Grenade" data-cat="Fruits"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🍈 Goyave</div><div class="unite-col"><span class="unite">kg</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="200" data-id="13" data-nom="Goyave" data-cat="Fruits"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🥝 Kiwi</div><div class="unite-col"><span class="unite">pce</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="80" data-id="14" data-nom="Kiwi" data-cat="Fruits"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🍊 Mandarine</div><div class="unite-col"><span class="unite">kg</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="90" data-id="15" data-nom="Mandarine" data-cat="Fruits"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🥭 Mangue</div><div class="unite-col"><span class="unite">pce</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="250" data-id="16" data-nom="Mangue" data-cat="Fruits"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🍈 Melon</div><div class="unite-col"><span class="unite">pce</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="200" data-id="17" data-nom="Melon" data-cat="Fruits"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🫐 Mûre</div><div class="unite-col"><span class="unite">kg</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="200" data-id="18" data-nom="Mûre" data-cat="Fruits"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🍑 Nectarine</div><div class="unite-col"><span class="unite">kg</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="140" data-id="19" data-nom="Nectarine" data-cat="Fruits"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🍑 Nèfle</div><div class="unite-col"><span class="unite">kg</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="170" data-id="20" data-nom="Nèfle" data-cat="Fruits"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🫒 Olive</div><div class="unite-col"><span class="unite">kg</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="220" data-id="21" data-nom="Olive" data-cat="Fruits"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🍊 Orange</div><div class="unite-col"><span class="unite">kg</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="80" data-id="22" data-nom="Orange" data-cat="Fruits"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🍋 Pamplemousse</div><div class="unite-col"><span class="unite">pce</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="120" data-id="23" data-nom="Pamplemousse" data-cat="Fruits"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🍉 Pastèque</div><div class="unite-col"><span class="unite">kg</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="35" data-id="24" data-nom="Pastèque" data-cat="Fruits"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🍑 Pêche</div><div class="unite-col"><span class="unite">kg</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="120" data-id="25" data-nom="Pêche" data-cat="Fruits"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🍐 Poire</div><div class="unite-col"><span class="unite">kg</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="140" data-id="26" data-nom="Poire" data-cat="Fruits"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🍎 Pomme</div><div class="unite-col"><span class="unite">kg</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="130" data-id="27" data-nom="Pomme" data-cat="Fruits"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🍑 Prune</div><div class="unite-col"><span class="unite">kg</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="140" data-id="28" data-nom="Prune" data-cat="Fruits"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🍇 Raisin</div><div class="unite-col"><span class="unite">kg</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="150" data-id="29" data-nom="Raisin" data-cat="Fruits"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🍇 Raisin sec</div><div class="unite-col"><span class="unite">kg</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="400" data-id="30" data-nom="Raisin sec" data-cat="Fruits"><span class="da">DA</span></div></div>
+  <div class="cat">🥗 Légumes</div>
+  <div class="row"><div class="nom">🧄 Ail</div><div class="unite-col"><span class="unite">tête</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="30" data-id="31" data-nom="Ail" data-cat="Légumes"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🟢 Artichaut</div><div class="unite-col"><span class="unite">pce</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="80" data-id="32" data-nom="Artichaut" data-cat="Légumes"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🍆 Aubergine</div><div class="unite-col"><span class="unite">kg</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="80" data-id="33" data-nom="Aubergine" data-cat="Légumes"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🟣 Betterave</div><div class="unite-col"><span class="unite">kg</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="55" data-id="34" data-nom="Betterave" data-cat="Légumes"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🥦 Brocoli</div><div class="unite-col"><span class="unite">pce</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="130" data-id="35" data-nom="Brocoli" data-cat="Légumes"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🥕 Carotte</div><div class="unite-col"><span class="unite">kg</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="55" data-id="36" data-nom="Carotte" data-cat="Légumes"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🥬 Chou blanc</div><div class="unite-col"><span class="unite">pce</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="80" data-id="37" data-nom="Chou blanc" data-cat="Légumes"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🥬 Chou rouge</div><div class="unite-col"><span class="unite">pce</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="90" data-id="38" data-nom="Chou rouge" data-cat="Légumes"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🥦 Chou-fleur</div><div class="unite-col"><span class="unite">pce</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="120" data-id="39" data-nom="Chou-fleur" data-cat="Légumes"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🥒 Concombre</div><div class="unite-col"><span class="unite">kg</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="65" data-id="40" data-nom="Concombre" data-cat="Légumes"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🌿 Coriandre</div><div class="unite-col"><span class="unite">botte</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="20" data-id="41" data-nom="Coriandre" data-cat="Légumes"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🥒 Courgette</div><div class="unite-col"><span class="unite">kg</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="70" data-id="42" data-nom="Courgette" data-cat="Légumes"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🌿 Épinard</div><div class="unite-col"><span class="unite">botte</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="50" data-id="43" data-nom="Épinard" data-cat="Légumes"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🌿 Fenouil</div><div class="unite-col"><span class="unite">pce</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="60" data-id="44" data-nom="Fenouil" data-cat="Légumes"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🫘 Haricot vert</div><div class="unite-col"><span class="unite">kg</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="110" data-id="45" data-nom="Haricot vert" data-cat="Légumes"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🌽 Maïs</div><div class="unite-col"><span class="unite">pce</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="50" data-id="46" data-nom="Maïs" data-cat="Légumes"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🌿 Menthe</div><div class="unite-col"><span class="unite">botte</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="20" data-id="47" data-nom="Menthe" data-cat="Légumes"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🫛 Navet</div><div class="unite-col"><span class="unite">kg</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="45" data-id="48" data-nom="Navet" data-cat="Légumes"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🧅 Oignon</div><div class="unite-col"><span class="unite">kg</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="50" data-id="49" data-nom="Oignon" data-cat="Légumes"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🍠 Patate douce</div><div class="unite-col"><span class="unite">kg</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="80" data-id="50" data-nom="Patate douce" data-cat="Légumes"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🌿 Persil</div><div class="unite-col"><span class="unite">botte</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="20" data-id="51" data-nom="Persil" data-cat="Légumes"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🟢 Petit pois</div><div class="unite-col"><span class="unite">kg</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="120" data-id="52" data-nom="Petit pois" data-cat="Légumes"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🌶️ Piment doux</div><div class="unite-col"><span class="unite">kg</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="90" data-id="53" data-nom="Piment doux" data-cat="Légumes"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🧅 Poireau</div><div class="unite-col"><span class="unite">botte</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="60" data-id="54" data-nom="Poireau" data-cat="Légumes"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🫑 Poivron</div><div class="unite-col"><span class="unite">kg</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="100" data-id="55" data-nom="Poivron" data-cat="Légumes"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🥔 Pomme de terre</div><div class="unite-col"><span class="unite">kg</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="45" data-id="56" data-nom="Pomme de terre" data-cat="Légumes"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🎃 Potiron</div><div class="unite-col"><span class="unite">kg</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="40" data-id="57" data-nom="Potiron" data-cat="Légumes"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🌱 Radis</div><div class="unite-col"><span class="unite">botte</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="40" data-id="58" data-nom="Radis" data-cat="Légumes"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🥬 Salade</div><div class="unite-col"><span class="unite">pce</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="25" data-id="59" data-nom="Salade" data-cat="Légumes"><span class="da">DA</span></div></div>
+  <div class="row"><div class="nom">🍅 Tomate</div><div class="unite-col"><span class="unite">kg</span></div><div class="prix-wrap"><input type="number" min="0" step="1" value="60" data-id="60" data-nom="Tomate" data-cat="Légumes"><span class="da">DA</span></div></div>
+</div>
+
+<div class="historique">
+  <div class="historique-header">
+    <h2>📋 Historique des enregistrements</h2>
+    <div class="hist-actions">
+      <button class="btn-admin" id="btn-admin" onclick="ouvrirAdmin()">🔐 Admin</button>
+      <button class="btn-effacer" id="btn-effacer" onclick="effacerHistorique()">🗑 Effacer tout</button>
+    </div>
+  </div>
+  <div id="historique-body"><div class="historique-vide">Chargement…</div></div>
+</div>
+
+<footer>
+  <span>Ouvrir dans Chrome ou Firefox</span>
+  <button class="btn-print" onclick="window.print()">🖨️ Imprimer</button>
+</footer>
+
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <h3>🔐 Accès administrateur</h3>
+    <input type="password" id="mdp-input" placeholder="Mot de passe" onkeydown="if(event.key==='Enter')validerAdmin()">
+    <div class="modal-error" id="mdp-erreur"></div>
+    <div class="modal-btns">
+      <button class="btn-annuler" onclick="fermerModal()">Annuler</button>
+      <button class="btn-confirmer" onclick="validerAdmin()">Confirmer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+
+  const API_KEY = '$2a$10$iVNGMPaXEZSXgrNcMMYj.uO.SSFZkyYvPh6NEtjwlKjbV584WZaoe';
+  const BIN_ID  = '6a1d9962ddf5aa59f7804be9';
+  const ADMIN   = 'Cpjnjzb3';
+  const BASE    = 'https://api.jsonbin.io/v3/b/' + BIN_ID;
+  const H_READ  = { 'X-Master-Key': API_KEY, 'X-Bin-Meta': 'false' };
+  const H_WRITE = { 'X-Master-Key': API_KEY, 'Content-Type': 'application/json' };
+
+  const J = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+  const M = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+  function fD(ts){ const d=new Date(ts); return J[d.getDay()]+' '+d.getDate()+' '+M[d.getMonth()]+' '+d.getFullYear(); }
+  function fH(ts){ const d=new Date(ts); return String(d.getHours()).padStart(2,'0')+'h'+String(d.getMinutes()).padStart(2,'0'); }
+
+  document.getElementById('date-badge').textContent = fD(Date.now());
+
+  let historique = [];
+  let adminActif = false;
+
+  /* ── Lire le bin ── */
+  async function charger() { // retourne une promise implicite
+    setStatut('⏳ Synchronisation…','syncing');
+    try {
+      const r = await fetch(BASE + '/latest', { headers: H_READ });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const data = await r.json();
+      /* JSONBin avec X-Bin-Meta:false retourne directement le record */
+      historique = (data.historique || []).sort((a,b) => b.date - a.date);
+      /* Restaure les derniers prix */
+      if (historique.length) {
+        historique[0].items.forEach(item => {
+          const inp = document.querySelector('input[data-id="'+item.id+'"]');
+          if (inp) inp.value = item.prix;
+        });
+      }
+      afficher();
+      if (historique.length) {
+        document.getElementById('last-save').textContent =
+          'Dernier enreg. : ' + fD(historique[0].date) + ' à ' + fH(historique[0].date);
+      }
+      setStatut('✔ Synchronisé — modifiez un prix puis enregistrez','sauve');
+    } catch(e) {
+      historique = JSON.parse(localStorage.getItem('fl_hist') || '[]');
+      afficher();
+      setStatut('⚠️ Hors ligne ('+e.message+') — stockage local','modifie');
+    }
+  }
+
+  /* ── Sauvegarder le bin entier ── */
+  async function sauver() {
+    const body = JSON.stringify({ historique });
+    try {
+      const r = await fetch(BASE, { method:'PUT', headers: H_WRITE, body });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      localStorage.setItem('fl_hist', body);
+    } catch(e) {
+      localStorage.setItem('fl_hist', body);
+      throw e;
+    }
+  }
+
+  /* ── Enregistrer ── */
+  window.enregistrer = async function() {
+    const btn = document.getElementById('btn-save');
+    btn.disabled = true;
+    setStatut('⏳ Enregistrement…','syncing');
+    const ts = Date.now();
+    const items = [];
+    document.querySelectorAll('input[data-id]').forEach(inp => {
+      items.push({ id:inp.dataset.id, nom:inp.dataset.nom, cat:inp.dataset.cat, prix:Number(inp.value) });
+    });
+    historique.unshift({ date:ts, items });
+    try {
+      await sauver();
+      afficher();
+      setStatut('✔ Enregistré le '+fD(ts)+' à '+fH(ts),'sauve');
+      document.getElementById('last-save').textContent =
+        'Dernier enreg. : ' + fD(ts) + ' à ' + fH(ts);
+    } catch(e) {
+      afficher();
+      setStatut('✔ Sauvegardé localement (sync échouée : '+e.message+')','modifie');
+    }
+    btn.disabled = false;
+  };
+
+  /* ── Afficher historique ── */
+  function afficher() {
+    const body = document.getElementById('historique-body');
+    if (!historique.length) {
+      body.innerHTML = '<div class="historique-vide">Aucun enregistrement pour l\'instant.</div>';
+      return;
+    }
+    body.innerHTML = historique.map((snap,idx) => {
+      const fruits  = snap.items.filter(i=>i.cat==='Fruits');
+      const legumes = snap.items.filter(i=>i.cat==='Légumes');
+      const lg = arr => arr.map(i=>'<div class="snap-item"><span class="snap-item-nom">'+i.nom+'</span><span class="snap-item-prix">'+i.prix+' DA</span></div>').join('');
+      return '<div class="snap" id="sn'+idx+'">'
+        +'<div class="snap-header" onclick="tgl('+idx+')">'
+        +'<div><span class="snap-date">'+fD(snap.date)+'</span><span class="snap-heure"> à '+fH(snap.date)+'</span></div>'
+        +'<span class="snap-arrow">▼</span></div>'
+        +'<div class="snap-body"><div class="snap-grille">'
+        +'<div class="snap-cat">🌿 Fruits</div>'+lg(fruits)
+        +'<div class="snap-cat">🥗 Légumes</div>'+lg(legumes)
+        +'</div></div></div>';
+    }).join('');
+  }
+
+  window.tgl = idx => document.getElementById('sn'+idx).classList.toggle('ouvert');
+
+  /* ── Admin ── */
+  window.ouvrirAdmin = function() {
+    if (adminActif) {
+      adminActif = false;
+      document.getElementById('btn-admin').textContent = '🔐 Admin';
+      document.getElementById('btn-admin').classList.remove('actif');
+      document.getElementById('btn-effacer').classList.remove('visible');
+      return;
+    }
+    document.getElementById('mdp-input').value = '';
+    document.getElementById('mdp-erreur').textContent = '';
+    document.getElementById('modal-overlay').classList.add('visible');
+    setTimeout(()=>document.getElementById('mdp-input').focus(),100);
+  };
+  window.fermerModal = ()=>document.getElementById('modal-overlay').classList.remove('visible');
+  window.validerAdmin = function() {
+    if (document.getElementById('mdp-input').value === ADMIN) {
+      adminActif = true; fermerModal();
+      document.getElementById('btn-admin').textContent = '🔓 Admin actif';
+      document.getElementById('btn-admin').classList.add('actif');
+      document.getElementById('btn-effacer').classList.add('visible');
+    } else {
+      document.getElementById('mdp-erreur').textContent = 'Mot de passe incorrect.';
+      document.getElementById('mdp-input').value = '';
+    }
+  };
+  window.effacerHistorique = async function() {
+    if (!adminActif) return;
+    if (!confirm('Effacer tout l\'historique ? Irréversible.')) return;
+    historique = [];
+    try { await sauver(); } catch(e) {}
+    afficher();
+    setStatut('Historique effacé','');
+  };
+
+  function setStatut(msg,cls) {
+    const el = document.getElementById('save-status');
+    el.textContent = msg;
+    el.className = 'save-status'+(cls?' '+cls:'');
+  }
+
+  document.querySelector('.carte').addEventListener('input',()=>{
+    setStatut('⚠️ Modifications non enregistrées','modifie');
+    /* Stoppe le polling pendant une saisie active */
+    clearInterval(pollInterval);
+  });
+
+  /* ── Polling toutes les 30s ── */
+  let pollInterval;
+
+  async function poll() {
+    /* Ne pas écraser si l'utilisateur est en train de saisir */
+    if (document.getElementById('save-status').classList.contains('modifie')) return;
+    try {
+      const r = await fetch(BASE + '/latest', { headers: H_READ });
+      if (!r.ok) return;
+      const data = await r.json();
+      const distant = (data.historique || []).sort((a,b) => b.date - a.date);
+      /* Met à jour seulement si le serveur a une version plus récente */
+      if (!distant.length) return;
+      if (!historique.length || distant[0].date > historique[0].date) {
+        historique = distant;
+        distant[0].items.forEach(item => {
+          const inp = document.querySelector('input[data-id="'+item.id+'"]');
+          if (inp) inp.value = item.prix;
+        });
+        afficher();
+        setStatut('🔄 Mis à jour à '+fH(Date.now()),'sauve');
+        document.getElementById('last-save').textContent =
+          'Dernier enreg. : ' + fD(distant[0].date) + ' à ' + fH(distant[0].date);
+      }
+    } catch(e) { /* silencieux en poll */ }
+  }
+
+  function demarrerPolling() {
+    clearInterval(pollInterval);
+    pollInterval = setInterval(poll, 30000);
+  }
+
+  charger().then(demarrerPolling);
+  // relance le polling après un enregistrement
+  const _enregistrer = window.enregistrer;
+  window.enregistrer = async function() {
+    await _enregistrer();
+    demarrerPolling();
+  };
+})();
+</script>
+</body>
+</html>
